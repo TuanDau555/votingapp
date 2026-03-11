@@ -9,12 +9,21 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "16.1.4",
-    "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "@openzeppelin/contracts": "^4.9.6",
+    "axios": "^0.27.2",
+    "buffer": "^6.0.3",
+    "ethers": "^5.6.9",
+    "ipfs-http-client": "^57.0.3",
+    "next": "^12.2.1",
+    "react": "^18.2.0",
+    "react-countdown": "^2.3.2",
+    "react-dom": "^18.2.0",
+    "react-dropzone": "^14.2.2",
+    "react-icons": "^4.4.0",
+    "web3modal": "^1.9.8"
   },
   "devDependencies": {
-    "eslint": "9.39.2",
-    "eslint-config-next": "16.1.4"
+    "@nomicfoundation/hardhat-toolbox": "^1.0.2",
+    "hardhat": "^2.28.3"
   }
 }
