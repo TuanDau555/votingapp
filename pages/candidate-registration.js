@@ -1,153 +1,330 @@
-import React, {useState, useEffect, useCallback, useContext} from 'react';
-import { useRouter } from 'next/router';
-import { useDropzone } from 'react-dropzone';
-import Image from 'next/image';
-
-// Internal Import
+import React, { useState, useContext, useEffect } from 'react';
 import { VotingContext } from '../context/Voter';
-import Style from '../styles/allowedVoter.module.css';
-import images from '../assets';
-import Button from '../components/Button/Button';
-import Input from '../components/Input/Input';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 
-const candidateRegistration = ()=>{
-  const [fileUrl, setFileUrl] = useState(null);
-  const [candidateForm, setCandidateForm] = useState({
-    name: "",
-    address: "",
-    age: "",
-  });
+export default function CandidateRegistration() {
+  const {
+    connectWallet,
+    currentAccount,
+    setCandidate,
+    uploadToIPFSCandidate,
+    error
+  } = useContext(VotingContext);
 
   const router = useRouter();
-  const { setCandidate, uploadToIPFSCandidate, candidateArray, getNewCandidate} = useContext(VotingContext);
-
-  //--- Voters Image Drop
-  
-  const onDrop = useCallback(async(acceptedFil) => {
-    const url = await uploadToIPFSCandidate(acceptedFil[0]);
-    setFileUrl(url);
-    
-  }, []);
-
-  const {getRootProps, getInputProps} = useDropzone({
-    onDrop,
-    accept: "image/*",
-    maxSize: 5000000,
+  const [loading, setLoading] = useState(false);
+  const [formInput, setFormInput] = useState({
+    name: '',
+    address: '',
+    age: ''
   });
+  const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
 
-  useEffect(()=>{
-    getNewCandidate();
+  useEffect(() => {
+    if (!currentAccount) {
+      connectWallet();
+    }
   }, []);
-  
-  // ---- JSX 
-  
+
+  const handleInputChange = (e) => {
+    setFormInput({
+      ...formInput,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!file) {
+      alert('Vui lòng chọn ảnh');
+      return;
+    }
+    setLoading(true);
+    try {
+      const fileUrl = await uploadToIPFSCandidate(file);
+      await setCandidate(formInput, fileUrl, router);
+    } catch (error) {
+      console.error(error);
+    }
+    setLoading(false);
+  };
+
+  const styles = {
+    container: {
+      fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      minHeight: '100vh'
+    },
+    navbar: {
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      padding: '1rem 2rem',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backdropFilter: 'blur(10px)'
+    },
+    logo: {
+      fontSize: '1.8rem',
+      fontWeight: 'bold',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      margin: 0
+    },
+    navLinks: {
+      display: 'flex',
+      gap: '2rem',
+      alignItems: 'center'
+    },
+    navLink: {
+      textDecoration: 'none',
+      color: '#555',
+      fontWeight: '500',
+      transition: 'color 0.3s'
+    },
+    navLinkActive: {
+      color: '#667eea',
+      fontWeight: '600'
+    },
+    walletAddress: {
+      backgroundColor: '#f0f0f0',
+      padding: '0.6rem 1.5rem',
+      borderRadius: '50px',
+      fontSize: '0.9rem',
+      color: '#333',
+      border: '1px solid #e0e0e0'
+    },
+    main: {
+      maxWidth: '600px',
+      margin: '2rem auto',
+      padding: '0 1rem'
+    },
+    card: {
+      background: 'white',
+      borderRadius: '20px',
+      padding: '2.5rem',
+      boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+    },
+    title: {
+      fontSize: '2rem',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      textAlign: 'center',
+      marginBottom: '2rem'
+    },
+    errorMessage: {
+      backgroundColor: '#fee',
+      color: '#c33',
+      padding: '1rem',
+      borderRadius: '10px',
+      marginBottom: '1.5rem',
+      border: '1px solid #fcc'
+    },
+    formGroup: {
+      marginBottom: '1.5rem'
+    },
+    label: {
+      display: 'block',
+      marginBottom: '0.5rem',
+      color: '#555',
+      fontWeight: '500'
+    },
+    fileInputContainer: {
+      display: 'flex',
+      gap: '1rem',
+      alignItems: 'center'
+    },
+    fileInput: {
+      flex: 1,
+      padding: '0.75rem',
+      border: '2px dashed #ddd',
+      borderRadius: '10px',
+      cursor: 'pointer'
+    },
+    preview: {
+      width: '60px',
+      height: '60px',
+      borderRadius: '10px',
+      objectFit: 'cover',
+      border: '2px solid #667eea'
+    },
+    input: {
+      width: '100%',
+      padding: '0.75rem',
+      border: '1px solid #ddd',
+      borderRadius: '10px',
+      fontSize: '1rem',
+      transition: 'borderColor 0.3s'
+    },
+    submitButton: {
+      width: '100%',
+      padding: '1rem',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      color: 'white',
+      border: 'none',
+      borderRadius: '10px',
+      fontSize: '1.1rem',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'transform 0.3s, boxShadow 0.3s'
+    },
+    submitButtonDisabled: {
+      opacity: 0.5,
+      cursor: 'not-allowed'
+    },
+    backButton: {
+      background: 'none',
+      border: 'none',
+      color: 'white',
+      fontSize: '1rem',
+      cursor: 'pointer',
+      marginBottom: '1rem',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem'
+    }
+  };
+
   return (
-    <div className={Style.createVoter}>
-      <div>
-        {fileUrl && (
-          <div className={Style.voterInfo}>
-            <img src={fileUrl} alt='Voting image'/>
-            <div className={Style.voterInfo_paragraph}>
-              <p>
-                Name: <span>&nbsp; {candidateForm.name}</span>
-              </p>
-              <p>
-                Add: <span>&nbsp; {candidateForm.address.slice(0, 20)}</span>
-              </p>
-              <p>
-                age: <span>&nbsp; {candidateForm.age}</span>
-              </p>
+    <div style={styles.container}>
+      {/* Navbar */}
+      <nav style={styles.navbar}>
+        <h1 style={styles.logo}>VoteChain</h1>
+        <div style={styles.navLinks}>
+          <Link href="/" style={styles.navLink}>Trang chủ</Link>
+          <Link href="/candidate-registration" style={{...styles.navLink, ...styles.navLinkActive}}>Ứng cử viên</Link>
+          <Link href="/voterlist" style={styles.navLink}>Cử tri</Link>
+          {currentAccount && (
+            <span style={styles.walletAddress}>
+              {currentAccount.slice(0,6)}...{currentAccount.slice(-4)}
+            </span>
+          )}
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main style={styles.main}>
+        <button 
+          onClick={() => router.back()}
+          style={styles.backButton}
+          onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+          onMouseLeave={(e) => e.target.style.opacity = '1'}
+        >
+          ← Quay lại
+        </button>
+
+        <div style={styles.card}>
+          <h2 style={styles.title}>Đăng ký ứng cử viên</h2>
+
+          {error && (
+            <div style={styles.errorMessage}>
+              ⚠️ {error}
             </div>
-          </div>
-        )}
+          )}
 
-        {
-          fileUrl && (
-            <div className={Style.sideInfo}>
-              <div className={Style.sideInfo_box}>
-                <h4>Create candidate for voting</h4>
-                <p>
-                  Blockchain voting organization, provide blockchain eco system
-                </p>
-                <p className={Style.sideInfo_paragraph}>
-                  Contract Candidate
-                </p>
-              </div>
-              <div className={Style.card}>
-                {candidateArray.map((el, i) => (
-                  <div key={i + 1} className={Style.card_box}>
-                    <div className={Style.image}>
-                      <img src={el[3]} alt='Profile Photo'/>
-                    </div>
-
-                    <div className={Style.card_info}>
-                      <p>{el[1]} #{el[2].toNumber()}</p>
-                      <p>{el[0]}</p>
-                      <p>Address: {el[6].slice(0, 10)}...</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )
-        }
-        
-      </div>
-
-      <div className={Style.voter}>
-        <div className={Style.voter_container}>
-          <h1>Create New Candidate</h1>
-          <div className={Style.voter_container_box}>
-            <div className={Style.voter_container_box_div}>
-              <div {...getRootProps()}>
-                <input {...getInputProps()}/>
-
-                <div className={Style.voter_container_box_div_info}>
-                  <p>Upload File Max 10MB</p>
-
-                  <div className={Style.voter_container_box_div_image}>
-                    <Image src={images.upload} width={150} height={150} objectFit="contain" alt="Image"/>
-                  </div>
-                  <p>Drag and Drop File or Browse on your device</p>
-                </div>
+          <form onSubmit={handleSubmit}>
+            {/* Image Upload */}
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Ảnh đại diện</label>
+              <div style={styles.fileInputContainer}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  required
+                  style={styles.fileInput}
+                />
+                {previewUrl && (
+                  <img src={previewUrl} alt="Preview" style={styles.preview} />
+                )}
               </div>
             </div>
-          </div> 
-        </div>
 
-        <div className={Style.input_container}>
-          <Input inputType="text" title="Name" placeholder="Voter Name" handleClick={
-            (e) => setCandidateForm({...candidateForm, name: e.target.value})}
-          />
-          <Input inputType="text" title="Address" placeholder="Voter Adress" handleClick={
-            (e) => setCandidateForm({...candidateForm, address: e.target.value})}
-          />
-          <Input inputType="text" title="Age" placeholder="Voter Age" handleClick={
-            (e) => setCandidateForm({...candidateForm, age: e.target.value})}
-          />
-          <div className={Style.Button}>
-            <Button btnName="Authorized Candidate" handleClick={()=> setCandidate(candidateForm, fileUrl, router)}/>
-          </div>
-        </div>
-      </div>
+            {/* Name */}
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Họ và tên</label>
+              <input
+                type="text"
+                name="name"
+                value={formInput.name}
+                onChange={handleInputChange}
+                required
+                style={styles.input}
+                placeholder="Nhập họ tên"
+                onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                onBlur={(e) => e.target.style.borderColor = '#ddd'}
+              />
+            </div>
 
-      {/* {} */}
-      <div className={Style.createdVoter}>
-        <div className={Style.createdVoter_info}>
-          <Image src={images.creator} alt="image"/>
-          <p>Notice for User</p>
-          <p>Organizer
-            <span>0x939939..</span>
-          </p>
-          <p>
-            Only organizer of the voting can create voting for voting election
-          </p>
+            {/* Address */}
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Địa chỉ ví</label>
+              <input
+                type="text"
+                name="address"
+                value={formInput.address}
+                onChange={handleInputChange}
+                required
+                style={styles.input}
+                placeholder="Nhập địa chỉ ví"
+                onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                onBlur={(e) => e.target.style.borderColor = '#ddd'}
+              />
+            </div>
+
+            {/* Age */}
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Tuổi</label>
+              <input
+                type="number"
+                name="age"
+                value={formInput.age}
+                onChange={handleInputChange}
+                required
+                min="18"
+                style={styles.input}
+                placeholder="Nhập tuổi"
+                onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                onBlur={(e) => e.target.style.borderColor = '#ddd'}
+              />
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading || !currentAccount}
+              style={{
+                ...styles.submitButton,
+                ...(loading || !currentAccount ? styles.submitButtonDisabled : {})
+              }}
+              onMouseEnter={(e) => {
+                if (!loading && currentAccount) {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 10px 20px rgba(102, 126, 234, 0.3)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = 'none';
+              }}
+            >
+              {loading ? 'Đang xử lý...' : 'Đăng ký ứng cử viên'}
+            </button>
+          </form>
         </div>
-      </div>
+      </main>
     </div>
   );
-  
-};
-
-
-export default candidateRegistration
+}
