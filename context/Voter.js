@@ -6,8 +6,8 @@ import { useRouter } from 'next/router';
 
 // Internal Import
 import { VotingAddress, VotingAddressABI } from "./constants";
-console.log("PINATA_KEY:", process.env.NEXT_PUBLIC_PINATA_API_KEY);
-console.log("PINATA_SECRET:", process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY);
+// console.log("PINATA_KEY:", process.env.NEXT_PUBLIC_PINATA_API_KEY);
+// console.log("PINATA_SECRET:", process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY);
 
 const PINATA_API_KEY        = process.env.NEXT_PUBLIC_PINATA_API_KEY;
 const PINATA_SECRET_API_KEY = process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY;
@@ -161,7 +161,7 @@ export const VotingProvider = ({ children }) => {
 
             const metadataUrl = await uploadJSONToIPFS({ name, address, position, image: fileUrl });
 
-            const tx = await contract.voterRight(address, name, metadataUrl, fileUrl);
+            const tx = await contract.voterRight(address, name, fileUrl, metadataUrl);
             await tx.wait();
 
             console.log("Voter created!");
@@ -232,6 +232,21 @@ export const VotingProvider = ({ children }) => {
             setError("Something went wrong voting: " + err.message);
         }
     };
+
+    const checkIfVoted = async () => {
+        try {
+            const provider = getProvider();
+            const signer   = provider.getSigner();
+            const contract = fetchContract(signer);
+            const address  = await signer.getAddress();
+
+            const voterData = await contract.getVoterData(address);
+            return voterData[6];
+
+        } catch (error) {
+            return false;
+        }
+    }
 
     // ----------------------------------------------------------------
     // Candidate
@@ -308,6 +323,7 @@ export const VotingProvider = ({ children }) => {
             createVoter,
             getAllVoterData,
             giveVote,
+            checkIfVoted,
             setCandidate,
             getNewCandidate,
             error,
