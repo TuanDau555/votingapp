@@ -1,6 +1,8 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { VotingContext } from '../context/Voter';
 import Link from 'next/link';
+import axios from 'axios';
+
 
 export default function VoterList() {
   const {
@@ -21,6 +23,9 @@ export default function VoterList() {
     address: '',
     position: ''
   });
+
+  const [votersMeta, setVotersMeta] = useState([]);
+  
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
 
@@ -29,6 +34,26 @@ export default function VoterList() {
     getAllVoterData();
   }, []);
 
+  useEffect(() => {
+  if (!voterArray || voterArray.length === 0) return;
+
+  const fetchMeta = async () => {
+    const results = await Promise.all(
+      voterArray.map(async (voter) => {
+        try {
+          const res = await axios.get(voter[4]); // voter[4] = metadata URL
+          return res.data;
+        } catch {
+          return { position: 'N/A' };
+        }
+      })
+    );
+    setVotersMeta(results);
+  };
+
+  fetchMeta();
+}, [voterArray]);
+  
   const handleInputChange = (e) => {
     setFormInput({
       ...formInput,
@@ -389,19 +414,19 @@ export default function VoterList() {
                   <tr key={index}>
                     <td style={styles.td}>
                       <img 
-                        src={voter[4] || 'https://via.placeholder.com/40'} 
+                        src={voter[2] || 'https://via.placeholder.com/40'} 
                         alt="" 
                         style={styles.voterImage}
                       />
                     </td>
                     <td style={styles.td}>{voter[1]}</td>
                     <td style={styles.td}>
-                      {voter[0].slice(0,6)}...{voter[0].slice(-4)}
+                      {voter[3].slice(0, 6)}...{voter[3].slice(-4)}
                     </td>
-                    <td style={styles.td}>{voter[2]}</td>
+                    <td style={styles.td}>{votersMeta[index]?.position || 'Loading...'}</td>
                     <td style={styles.td}>
                       <span style={styles.statusBadge(voter[3])}>
-                        {voter[3] ? 'Đã bầu' : 'Chưa bầu'}
+                        {voter[6] ? 'Đã bầu' : 'Chưa bầu'}
                       </span>
                     </td>
                   </tr>

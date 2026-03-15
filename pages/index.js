@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, use } from 'react';
 import { VotingContext } from '../context/Voter';
 import Link from 'next/link';
 
@@ -11,20 +11,28 @@ export default function Home() {
     candidateArray,
     candidateLength,
     giveVote,
+    checkIfVoted,
     error
   } = useContext(VotingContext);
 
   const [loading, setLoading] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
 
   useEffect(() => {
     checkIfWalletConnected();
     getNewCandidate();
   }, []);
 
+  useEffect(() => {
+    if(!currentAccount) return;
+    checkIfVoted().then(voted => setHasVoted(voted));
+  }, [currentAccount]);
+
   const handleVote = async (candidate) => {
     setLoading(true);
     try {
       await giveVote(candidate);
+      setHasVoted(true);
       alert('✅ Bầu chọn thành công!');
       getNewCandidate();
     } catch (error) {
@@ -276,30 +284,30 @@ export default function Home() {
                 }}
               >
                 <img 
-                  src={candidate[5] || 'https://via.placeholder.com/300x200?text=No+Image'} 
+                  src={candidate[3] || 'https://via.placeholder.com/300x200?text=No+Image'} 
                   alt={candidate[2]}
                   style={styles.cardImage}
                 />
                 <div style={styles.cardContent}>
-                  <h3 style={styles.cardName}>{candidate[2]}</h3>
+                  <h3 style={styles.cardName}>{candidate[1]}</h3>
                   <p style={styles.cardInfo}>
-                    <strong>Địa chỉ:</strong> {candidate[0].slice(0,6)}...{candidate[0].slice(-4)}
+                    <strong>Địa chỉ:</strong> {candidate[6].slice(0,6)}...{candidate[0].slice(-4)}
                   </p>
                   <p style={styles.cardInfo}>
-                    <strong>Tuổi:</strong> {candidate[1].toString()}
+                    <strong>Tuổi:</strong> {candidate[0].toString()}
                   </p>
                   <p style={styles.cardVotes}>
                     🗳️ {candidate[4].toString()} phiếu
                   </p>
                   <button
-                    onClick={() => handleVote({ address: candidate[0], id: index })}
-                    disabled={loading || !currentAccount}
+                    onClick={() => handleVote({ address: candidate[6], id: candidate[2].toNumber() })}
+                    disabled={loading || !currentAccount || hasVoted}
                     style={{
                       ...styles.voteButton,
                       ...(loading || !currentAccount ? styles.voteButtonDisabled : {})
                     }}
                   >
-                    {loading ? 'Đang xử lý...' : 'Bầu chọn'}
+                    { hasVoted ? 'Bạn chỉ có thể bầu chọn 1 lần' : loading ? 'Đang xử lý...' : 'Bầu chọn'}
                   </button>
                 </div>
               </div>

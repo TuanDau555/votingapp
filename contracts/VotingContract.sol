@@ -75,7 +75,7 @@ contract Create {
     }
     
     function setCandidate(address _address, string memory _age, string memory _name, string memory _image, string memory _ipfs) public {
-        require(votingOrganizer == msg.sender, "Only organizer candidate");
+        require(votingOrganizer == msg.sender, "Only organizer can be create candidate");
 
         _candidateId.increment();
 
